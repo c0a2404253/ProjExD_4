@@ -242,6 +242,10 @@ class Score:
         screen.blit(self.image, self.rect)
         
 class NeoBeam:
+    """
+    一度に複数方向へビームを発射する弾幕のクラス
+    
+    """
     def __init__(self, bird: Bird, num: int): self.bird, self.num = bird, num
     def gen_beams(self):
         angle0 = range(-50, 51, int(100/(self.num-1))) if self.num>1 else [0]
