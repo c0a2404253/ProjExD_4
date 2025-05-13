@@ -134,6 +134,7 @@ class Bomb(pg.sprite.Sprite):
         self.rect.centerx = emy.rect.centerx
         self.rect.centery = emy.rect.centery+emy.rect.height//2
         self.speed = 6
+        self.state="active"
 
     def update(self):
         """
@@ -202,6 +203,32 @@ class Explosion(pg.sprite.Sprite):
         if self.life < 0:
             self.kill()
 
+class EMP(pg.sprite.Sprite):
+    '''
+    電磁パルス
+    '''
+    def __init__(self,screen,bombs,emys):
+        self.image = pg.Surface((WIDTH, HEIGHT))
+        pg.draw.rect(self.image, (255,255,0),
+                    (0,0, WIDTH, HEIGHT))
+        self.image.set_alpha(128)
+        self.rect = self.image.get_rect()
+        screen.blit(self.image, self.rect)
+        #黄色画面ここまで
+        for emy in emys:
+            emy.interval =math.inf#敵機に活動再開時間＋無限
+            emy.image= pg.transform.laplacian(emy.image)#敵機ラプラシアンフィルタ
+        #敵機停止ここまで
+        for bomb in bombs:
+            bomb.speed = bomb.speed/2
+            bomb.state = "inactive"
+        #爆弾不発ここまで
+        
+
+        pg.display.update()
+        time.sleep(0.05)
+
+
 
 class Enemy(pg.sprite.Sprite):
     """
@@ -240,7 +267,7 @@ class Score:
     def __init__(self):
         self.font = pg.font.Font(None, 50)
         self.color = (0, 0, 255)
-        self.value = 0
+        self.value = 10000
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         self.rect = self.image.get_rect()
         self.rect.center = 100, HEIGHT-50
@@ -255,12 +282,14 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
+    emp = None
 
     bird = Bird(3, (900, 400))
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    #emps = pg.sprite.Group()
 
     tmr = 0
     clock = pg.time.Clock()
@@ -271,6 +300,10 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
+            if score.value>=20:
+                if event.type == pg.KEYDOWN and event.key == pg.K_e:
+                    emp = EMP(screen,bombs,emys)
+                    score.value-=20
             # 無敵発動の条件
             if event.type == pg.KEYDOWN and event.key == pg.K_4 and score.value >= 100:
                 bird.state = "hyper"
@@ -316,6 +349,8 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        if emp !=None:
+            emp.update(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
