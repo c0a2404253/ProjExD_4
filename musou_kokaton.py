@@ -232,7 +232,7 @@ class Score:
     def __init__(self):
         self.font = pg.font.Font(None, 50)
         self.color = (0, 0, 255)
-        self.value = 0
+        self.value = 1000
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         self.rect = self.image.get_rect()
         self.rect.center = 100, HEIGHT-50
@@ -240,6 +240,36 @@ class Score:
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
+
+class Shield(pg.sprite.Sprite):
+    """
+    追加機能５
+    引数：bird, life
+    """
+    def __init__(self, bird: Bird, life: int):
+        super().__init__()
+        self.life = life
+        W = 20
+        H = bird.rect.height * 2
+        self.image = pg.Surface((W, H))
+        self.image.fill((0, 0, 0))
+        self.image.set_colorkey((0, 0, 0))
+        pg.draw.rect(self.image, (0, 0, 255), (0, 0, W, H))
+        vx, vy = bird.dire
+        kakudo = math.degrees(math.atan2(-vy, vx))
+        self.image = pg.transform.rotozoom(self.image, kakudo, 1.0)
+        self.image.set_colorkey((0, 0, 0))
+        self.rect = self.image.get_rect()
+        self.rect.centerx = bird.rect.centerx + bird.rect.width * vx
+        self.rect.centery = bird.rect.centery + bird.rect.height * vy
+        
+
+    def update(self):
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
+        
+        
 
 
 def main():
@@ -253,6 +283,7 @@ def main():
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    shields = pg.sprite.Group()
 
     tmr = 0
     clock = pg.time.Clock()
@@ -267,6 +298,11 @@ def main():
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
+
+        # 追加機能５
+        if key_lst[pg.K_5] and score.value >= 50 and len(shields) == 0:
+            score.value -= 50
+            shields.add(Shield(bird, 400))
 
         for emy in emys:
             if emy.state == "stop" and tmr%emy.interval == 0:
@@ -288,6 +324,12 @@ def main():
             pg.display.update()
             time.sleep(2)
             return
+        
+        for bomb in pg.sprite.groupcollide(bombs, shields, True, False).keys():
+            exps.add(Explosion(bomb, 50))
+            score.value += 1
+
+        
 
         bird.update(key_lst, screen)
         beams.update()
@@ -299,6 +341,10 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        #追加機能５
+        shields.update()
+        shields.draw(screen)
+
         pg.display.update()
         tmr += 1
         clock.tick(50)
