@@ -84,20 +84,20 @@ class Bird(pg.sprite.Sprite):
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.9)
         screen.blit(self.image, self.rect)
 
+    
+        
     def update(self, key_lst: list[bool], screen: pg.Surface):
-        """
-        押下キーに応じてこうかとんを移動させる
-        引数1 key_lst：押下キーの真理値リスト
-        引数2 screen：画面Surface
-        """
+    # Shiftキーが押されていたらスピードを2倍に
+        speed = 20 if key_lst[pg.K_LSHIFT] else 10
+
         sum_mv = [0, 0]
         for k, mv in __class__.delta.items():
             if key_lst[k]:
                 sum_mv[0] += mv[0]
                 sum_mv[1] += mv[1]
-        self.rect.move_ip(self.speed*sum_mv[0], self.speed*sum_mv[1])
+        self.rect.move_ip(speed*sum_mv[0], speed*sum_mv[1])
         if check_bound(self.rect) != (True, True):
-            self.rect.move_ip(-self.speed*sum_mv[0], -self.speed*sum_mv[1])
+            self.rect.move_ip(-speed*sum_mv[0], -speed*sum_mv[1])
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.dire = tuple(sum_mv)
             self.image = self.imgs[self.dire]
@@ -109,6 +109,11 @@ class Bird(pg.sprite.Sprite):
                 self.state = "normal"
         screen.blit(self.image, self.rect)
 
+        
+        
+        
+        
+        
 
 class Bomb(pg.sprite.Sprite):
     """
@@ -230,7 +235,20 @@ class Enemy(pg.sprite.Sprite):
             self.state = "stop"
         self.rect.move_ip(self.vx, self.vy)
 
+""" class Gravity(pg.sprite.Sprite): #追加２
+    def __init__(self, life=400):
+        super().__init__()
+        self.image = pg.Surface((WIDTH, HEIGHT))
+        self.image.set_alpha(128)
+        self.image.fill((0, 0, 0))
+        self.rect = self.image.get_rect()
+        self.life = life
 
+    def update(self):
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
+"""
 class Score:
     """
     打ち落とした爆弾，敵機の数をスコアとして表示するクラス
@@ -261,6 +279,7 @@ def main():
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    #gravitys = pg.sprite.Group()
 
     tmr = 0
     clock = pg.time.Clock()
@@ -285,6 +304,14 @@ def main():
             if emy.state == "stop" and tmr%emy.interval == 0:
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
                 bombs.add(Bomb(emy, bird))
+        
+        """  for gravity in gravitys:
+            for bomb in pg.sprite.spritecollide(gravity, bombs, True):
+                exps.add(Explosion(bomb, 50))
+            for emy in pg.sprite.spritecollide(gravity, emys, True):
+                exps.add(Explosion(emy, 100))
+                score.value += 10 
+        """
 
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():  # ビームと衝突した敵機リスト
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
