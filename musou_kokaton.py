@@ -141,21 +141,21 @@ class Beam(pg.sprite.Sprite):
     """
     ビームに関するクラス
     """
-    def __init__(self, bird: Bird):
+    def __init__(self, bird: Bird, angle0: float=0):
         """
         ビーム画像Surfaceを生成する
         引数 bird：ビームを放つこうかとん
         """
+        
         super().__init__()
         self.vx, self.vy = bird.dire
-        angle = math.degrees(math.atan2(-self.vy, self.vx))
+        base_angle = math.degrees(math.atan2(-self.vy, self.vx))
+        angle = base_angle + angle0
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/beam.png"), angle, 1.0)
-        self.vx = math.cos(math.radians(angle))
-        self.vy = -math.sin(math.radians(angle))
-        self.rect = self.image.get_rect()
-        self.rect.centery = bird.rect.centery+bird.rect.height*self.vy
-        self.rect.centerx = bird.rect.centerx+bird.rect.width*self.vx
+        self.vx = math.cos(math.radians(angle)); self.vy = -math.sin(math.radians(angle))
+        self.rect = self.image.get_rect(center=(bird.rect.centerx+self.vx*bird.rect.width, bird.rect.centery+self.vy*bird.rect.height))
         self.speed = 10
+
 
     def update(self):
         """
@@ -240,6 +240,12 @@ class Score:
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
+        
+class NeoBeam:
+    def __init__(self, bird: Bird, num: int): self.bird, self.num = bird, num
+    def gen_beams(self):
+        angle0 = range(-50, 51, int(100/(self.num-1))) if self.num>1 else [0]
+        return [Beam(self.bird, a) for a in angle0]
 
 
 def main():
@@ -262,6 +268,8 @@ def main():
             if event.type == pg.QUIT:
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+                if key_lst[pg.K_6]:
+                        beams.add(*NeoBeam(bird,5).gen_beams())
                 beams.add(Beam(bird))
         screen.blit(bg_img, [0, 0])
 
