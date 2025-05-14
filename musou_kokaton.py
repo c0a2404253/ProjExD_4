@@ -118,7 +118,8 @@ class Beam(pg.sprite.Sprite):
     def __init__(self, bird: Bird):
         super().__init__()
         self.vx, self.vy = bird.dire
-        angle = math.degrees(math.atan2(-self.vy, self.vx))
+        base_angle = math.degrees(math.atan2(-self.vy, self.vx))
+        angle = base_angle + angle0
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/beam.png"), angle, 1.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
@@ -126,6 +127,7 @@ class Beam(pg.sprite.Sprite):
         self.rect.centery = bird.rect.centery + bird.rect.height * self.vy
         self.rect.centerx = bird.rect.centerx + bird.rect.width * self.vx
         self.speed = 10
+
 
     def update(self):
         self.rect.move_ip(self.speed * self.vx, self.speed * self.vy)
@@ -180,6 +182,16 @@ class Score:
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
+        
+class NeoBeam:
+    """
+    一度に複数方向へビームを発射する弾幕のクラス
+    
+    """
+    def __init__(self, bird: Bird, num: int): self.bird, self.num = bird, num
+    def gen_beams(self):
+        angle0 = range(-50, 51, int(100/(self.num-1))) if self.num>1 else [0]
+        return [Beam(self.bird, a) for a in angle0]
 
 
 class Gravity(pg.sprite.Sprite):
@@ -228,6 +240,8 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
+                    if key_lst[pg.K_6]:
+                        beams.add(*NeoBeam(bird,5).gen_beams())
                     beams.add(Beam(bird))
                 elif event.key == pg.K_q:
                     if score.value >= 200:
