@@ -115,11 +115,11 @@ class Bomb(pg.sprite.Sprite):
 
 
 class Beam(pg.sprite.Sprite):
-    def __init__(self, bird: Bird):
+    def __init__(self, bird: Bird, angle0: float=0):
         super().__init__()
         self.vx, self.vy = bird.dire
         base_angle = math.degrees(math.atan2(-self.vy, self.vx))
-        angle = base_angle + angle0
+        angle = base_angle + angle0 
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/beam.png"), angle, 1.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
