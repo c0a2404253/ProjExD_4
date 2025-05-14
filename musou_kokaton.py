@@ -168,20 +168,6 @@ class Enemy(pg.sprite.Sprite):
             self.state = "stop"
         self.rect.move_ip(self.vx, self.vy)
 
-""" class Gravity(pg.sprite.Sprite): #追加２
-    def __init__(self, life=400):
-        super().__init__()
-        self.image = pg.Surface((WIDTH, HEIGHT))
-        self.image.set_alpha(128)
-        self.image.fill((0, 0, 0))
-        self.rect = self.image.get_rect()
-        self.life = life
-
-    def update(self):
-        self.life -= 1
-        if self.life < 0:
-            self.kill()
-"""
 class Score:
     def __init__(self):
         self.font = pg.font.Font(None, 50)
@@ -240,8 +226,14 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return 0
-            if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                beams.add(Beam(bird))
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_SPACE:
+                    beams.add(Beam(bird))
+                elif event.key == pg.K_q:
+                    if score.value >= 200:
+                        score.value -= 200
+                        gravities.add(Gravity(400))
+
             # 無敵発動の条件
             if event.type == pg.KEYDOWN and event.key == pg.K_4 and score.value >= 100:
                 bird.state = "hyper"
