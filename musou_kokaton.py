@@ -217,6 +217,36 @@ class Gravity(pg.sprite.Sprite):
             emy.kill()
             score.value += 10
 
+class Shield(pg.sprite.Sprite):
+    """
+    追加機能５
+    引数：bird, life
+    """
+    def __init__(self, bird: Bird, life: int):
+        super().__init__()
+        self.life = life
+        W = 20
+        H = bird.rect.height * 2
+        self.image = pg.Surface((W, H))
+        self.image.fill((0, 0, 0))
+        self.image.set_colorkey((0, 0, 0))
+        pg.draw.rect(self.image, (0, 0, 255), (0, 0, W, H))
+        vx, vy = bird.dire
+        kakudo = math.degrees(math.atan2(-vy, vx))
+        self.image = pg.transform.rotozoom(self.image, kakudo, 1.0)
+        self.image.set_colorkey((0, 0, 0))
+        self.rect = self.image.get_rect()
+        self.rect.centerx = bird.rect.centerx + bird.rect.width * vx
+        self.rect.centery = bird.rect.centery + bird.rect.height * vy
+        
+
+    def update(self):
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
+        
+        
+
 
 def main():
     pg.display.set_caption("真！こうかとん無双")
@@ -230,6 +260,7 @@ def main():
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
     gravities = pg.sprite.Group()
+    shields = pg.sprite.Group()
 
     tmr = 0
     clock = pg.time.Clock()
@@ -258,6 +289,11 @@ def main():
         if tmr % 200 == 0:
             emys.add(Enemy())
 
+        # 追加機能５
+        if key_lst[pg.K_5] and score.value >= 50 and len(shields) == 0:
+            score.value -= 50
+            shields.add(Shield(bird, 400))
+
         for emy in emys:
             if emy.state == "stop" and tmr % emy.interval == 0:
                 bombs.add(Bomb(emy, bird))
@@ -284,6 +320,13 @@ def main():
 
         for gravity in gravities:
             gravity.update(bombs, emys, exps, score)
+           
+        
+        for bomb in pg.sprite.groupcollide(bombs, shields, True, False).keys():
+            exps.add(Explosion(bomb, 50))
+            score.value += 1
+
+        
 
         bird.update(key_lst, screen)
         beams.update()
@@ -296,6 +339,9 @@ def main():
         exps.draw(screen)
         score.update(screen)
         gravities.draw(screen)
+        #追加機能５
+        shields.update()
+        shields.draw(screen)
 
         pg.display.update()
         tmr += 1
